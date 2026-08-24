@@ -1,6 +1,6 @@
 ---
 name: dsh-writing-anti-ai
-description: This skill should be used when the user asks to "remove AI writing patterns", "去AI味", "除AI痕迹", "humanize this text", "make this sound more natural", "remove AI-generated traces", "fix robotic writing", or needs to eliminate AI writing patterns from prose. Supports Chinese and English across multiple genres including reports, academic papers, and narrative. Native to DeepSeek Harness (DSH): automatically scales short/medium/long documents, and for long text uses the DSH workflow + subagent tools to fan out per-chunk edits with machine-checkable structure. Based on Wikipedia's "Signs of AI writing" guide.
+description: "This skill should be used when the user asks to \"remove AI writing patterns\", \"去AI味\", \"除AI痕迹\", \"humanize this text\", \"make this sound more natural\", \"remove AI-generated traces\", \"fix robotic writing\", or needs to eliminate AI writing patterns from prose. Supports Chinese and English across multiple genres including reports, academic papers, and narrative. Native to DeepSeek Harness (DSH); automatically scales short/medium/long documents, and for long text uses the DSH workflow + subagent tools to fan out per-chunk edits with machine-checkable structure. Based on Wikipedia's \"Signs of AI writing\" guide."
 ---
 
 # Writing Anti-AI (NTAI)
