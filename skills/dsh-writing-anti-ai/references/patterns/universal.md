@@ -4,7 +4,7 @@ Patterns in this file apply to ALL writing genres. Organized by signal level.
 
 ---
 
-## Must-Fix
+## 🔴 Must-Fix
 
 ### U1. Filler Phrases (填充短语)
 
@@ -91,28 +91,41 @@ Patterns in this file apply to ALL writing genres. Organized by signal level.
 
 ---
 
-### U8. AI Symbol Chains (AI符号链)
+### U8. AI Symbols (AI符号)
 
-**Detect**: Arrow symbols (→, ⇒, ➡, ➤, ➜) used to chain 3+ items in a flowchart-like sequence within prose text. Common patterns include A→B→C, A→B→C→D, or 步骤→步骤→步骤.
+**Detect**: Four families of non-prose symbols, flagged on **any occurrence**:
 
-**Why it's AI**: LLMs compress processes into visual arrow chains instead of writing natural sentences. A human writer uses commas, 到, 再到, or plain verbs. The arrow chain reads like a diagram squeezed into prose — no human writes "我从家→地铁站→公司".
+| 家族 | 符号 | 替换为 |
+|------|------|--------|
+| 箭头连接符 | → ⇒ ➡ ➤ ➜ | 顿号、逗号，或 到／再到／经 |
+| 状态 emoji | ✅ ❌ ⚠️ 🔴 🟠 🟡 🟢 ⭐ | 符合／不符合／需注意 |
+| 角引号 | 「 」 | “ ”（中文标准引号，任何输入法可打） |
+| 勾叉标记 | √ ✓ ✖ △ | 符合／不符合／需注意 |
 
-**Action**: Replace with natural Chinese listing. Use commas、顿号、到/再到, or restructure into a full sentence with verbs.
+**Why it's AI**: LLMs emit these freely because they are token-cheap and visually loud. Three separate problems follow:
 
-**Before**: 设计流程包括总平→建模→渲染→分析图→展板。
-**After**: 设计流程从总平、建模、渲染，到分析图和展板。
+1. **Arrow chains** compress processes into diagrams-in-prose. No human writes "我从家→地铁站→公司".
+2. **Emoji and check marks** are status shorthand where prose is expected. In a 中文正式材料 they read as chat-app output, and pasting into a government portal usually renders them as tofu boxes.
+3. **Corner brackets** 「 」 cannot be typed on a standard pinyin IME, so a colleague who receives the file cannot edit or extend it. Same for √ ✖ △.
+
+**Action**: Replace with the Chinese word or punctuation the symbol stood for. See `references/replacements.md` → 「AI 符号 → 中文写法」.
 
 **Before**: 数据采集→预处理→建模→验证→输出。
 **After**: 数据经采集、预处理后建模，验证后输出。
 
-**Before**: 入口→大厅→走廊→会议室。
-**After**: 从入口经大厅和走廊，到达会议室。
+**Before**: | 对象认定 | 江门市第二批历史建筑 ✅ | 未认定 ❌ |
+**After**: | 对象认定 | 江门市第二批历史建筑（符合） | 未认定（不符合） |
 
-**Note**: A single → between two items (A→B) may be acceptable in technical contexts (e.g., file format conversion, data pipeline labels). Chains of 3+ arrows are always must-fix.
+**Before**: 依据附件3-1 否定项4：「文物，非历史建筑……不予支持」。
+**After**: 依据附件3-1 否定项4：“文物，非历史建筑……不予支持”。
+
+**Exception — × is ambiguous.** A multiplication sign (3,000元/㎡ × 面积) is correct typography, not an AI tell. Judge by context: × next to numbers/units = keep; × used as a verdict mark = replace. Never blanket-replace ×.
+
+**Note**: The old rule flagged arrows only in 3+ chains and left single A→B alone. That is withdrawn — single arrows go too.
 
 ---
 
-## Should-Fix
+## 🟡 Should-Fix
 
 ### U9. Mechanical Enumeration (机械枚举)
 
@@ -169,7 +182,7 @@ Patterns in this file apply to ALL writing genres. Organized by signal level.
 
 ---
 
-## Consider
+## ⚪ Consider
 
 ### U14. Rule of Three (三段式)
 

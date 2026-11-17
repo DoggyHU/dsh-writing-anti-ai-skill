@@ -1,98 +1,269 @@
 {
-  "$comment": "AI 味检测模式数据（detect.py 加载）。把词表从代码抽到数据，加词/加类目只改这里，不动代码。每个类目含 level（Must-fix/Should-fix/Consider）与 items。file 字段为 null 表示通用；填 'report'/'academic' 则仅在对应文体启用。",
-  "categories": [
-    {
-      "id": "filler",
-      "label": "filler_phrases",
-      "level": "Must-fix",
-      "file": null,
-      "items": [
-        "值得注意的是", "需要强调的是", "需要指出的是", "众所周知",
-        "不可否认的是", "毋庸置疑", "换句话说", "也就是说",
-        "总体而言", "从某种程度上说", "基于……的事实",
-        "在……的背景下", "随着……的不断发展", "在当今"
-      ]
-    },
-    {
-      "id": "ai_vocab",
-      "label": "ai_vocabulary",
-      "level": "Must-fix",
-      "file": null,
-      "items": [
-        "依托", "赋能", "闭环", "抓手", "格局", "夯实",
-        "扎实推进", "深入开展", "持续优化", "着力", "大力",
-        "加大……力度", "强化", "深化", "全面提升", "显著提升",
-        "大幅增加", "不断完善", "充分发挥", "有机结合",
-        "深度融合", "统筹协调", "协同推进", "系统部署",
-        "周密安排", "精心组织"
-      ]
-    },
-    {
-      "id": "value_adj",
-      "label": "value_adjectives",
-      "level": "Must-fix",
-      "file": null,
-      "items": [
-        "重要的", "著名的", "优良的", "完善的", "严格的",
-        "充分的", "深刻的", "丰富的", "显著的", "关键的",
-        "重大的", "突出的"
-      ]
-    },
-    {
-      "id": "vague_attr",
-      "label": "vague_attributions",
-      "level": "Must-fix",
-      "file": null,
-      "items": [
-        "专家认为", "研究表明", "据悉", "据了解", "数据显示",
-        "业内人士指出", "相关人士表示"
-      ]
-    },
-    {
-      "id": "enum",
-      "label": "mechanical_enumeration",
-      "level": "Should-fix",
-      "file": null,
-      "items": ["首先", "其次", "第三", "第四", "最后", "第一", "第二"]
-    },
-    {
-      "id": "double_mods",
-      "label": "double_modifiers",
-      "level": "Should-fix",
-      "kind": "pairs",
-      "file": null,
-      "items": [
-        ["验证与确认", "验证"], ["精密度与准确度", "精密度"],
-        ["科学性与可靠性", "科学性"], ["准确性与可靠性", "准确性"],
-        ["审核与追溯", "审核"]
-      ]
-    },
-    {
-      "id": "self_praise",
-      "label": "self_praise",
-      "level": "Should-fix",
-      "kind": "regex",
-      "file": null,
-      "items": [
-        "奠定了坚实基础", "有效保障了", "充分体现了",
-        "具有重要的.*意义", "产生深远影响", "全面摸清.*家底"
-      ]
-    },
-    {
-      "id": "slogan",
-      "label": "policy_slogans",
-      "level": "Should-fix",
-      "file": "report",
-      "items": [
-        "严守耕地保护红线", "全面推进乡村振兴",
-        "促进农业高质量发展", "保障粮食安全",
-        "加快推进农业农村现代化"
-      ]
-    }
-  ],
-  "structural": {
-    "em_dash_symbols": ["——", "—"],
-    "colon_symbols": ["："],
-    "arrow_chain_symbols": ["→", "⇒", "➡", "➤", "➜"]
+ "$comment": "AI 味检测模式数据（detect.py 加载）。把词表从代码抽到数据，加词/加类目只改这里，不动代码。每个类目含 level（Must-fix/Should-fix/Consider）与 items。file 字段为 null 表示通用；填 'report'/'academic' 则仅在对应文体启用。",
+ "categories": [
+  {
+   "id": "filler",
+   "label": "filler_phrases",
+   "level": "Must-fix",
+   "file": null,
+   "items": [
+    "值得注意的是",
+    "需要强调的是",
+    "需要指出的是",
+    "众所周知",
+    "不可否认的是",
+    "毋庸置疑",
+    "换句话说",
+    "也就是说",
+    "总体而言",
+    "从某种程度上说",
+    "基于……的事实",
+    "在……的背景下",
+    "随着……的不断发展",
+    "在当今"
+   ]
+  },
+  {
+   "id": "ai_vocab",
+   "label": "ai_vocabulary",
+   "level": "Must-fix",
+   "file": null,
+   "items": [
+    "依托",
+    "赋能",
+    "闭环",
+    "抓手",
+    "格局",
+    "夯实",
+    "扎实推进",
+    "深入开展",
+    "持续优化",
+    "着力",
+    "大力",
+    "加大……力度",
+    "强化",
+    "深化",
+    "全面提升",
+    "显著提升",
+    "大幅增加",
+    "不断完善",
+    "充分发挥",
+    "有机结合",
+    "深度融合",
+    "统筹协调",
+    "协同推进",
+    "系统部署",
+    "周密安排",
+    "精心组织"
+   ]
+  },
+  {
+   "id": "jargon_ban",
+   "label": "jargon_banned",
+   "level": "Must-fix",
+   "file": null,
+   "items": [
+    "商业闭环",
+    "价值闭环",
+    "能力沉淀",
+    "拉通",
+    "底层逻辑",
+    "顶层设计",
+    "认知跃迁",
+    "价值释放",
+    "能力建设",
+    "降本增效",
+    "内容矩阵",
+    "全链路",
+    "组合拳",
+    "打开想象空间",
+    "结构性机会",
+    "关键命题",
+    "深层逻辑",
+    "技术底座",
+    "公共底座",
+    "技术主权",
+    "单点风险",
+    "主脊柱",
+    "材料锚点",
+    "认知增量",
+    "迭代闭环"
+   ]
+  },
+  {
+   "id": "value_adj",
+   "label": "value_adjectives",
+   "level": "Must-fix",
+   "file": null,
+   "items": [
+    "重要的",
+    "著名的",
+    "优良的",
+    "完善的",
+    "严格的",
+    "充分的",
+    "深刻的",
+    "丰富的",
+    "显著的",
+    "关键的",
+    "重大的",
+    "突出的"
+   ]
+  },
+  {
+   "id": "fanan",
+   "label": "fanan_turn",
+   "level": "Must-fix",
+   "kind": "regex",
+   "file": null,
+   "items": [
+    "不是[^。！？\\n]{1,20}?而是",
+    "并非[^。！？\\n]{1,20}?而是",
+    "不在于[^。！？\\n]{1,20}?而在于",
+    "与其说[^。！？\\n]{1,20}?不如(?:说|讲)",
+    "表面(?:上|看)?[^。！？\\n]{0,15}?实际上?",
+    "看似[^。！？\\n]{1,20}?实则",
+    "你以为[^。！？\\n]{1,20}?其实",
+    "回头看?才(?:发现|明白)",
+    "答案恰恰相反",
+    "不是[^。！？\\n]{1,15}?[，,]\\s*是",
+    "[^。！？\\n]{1,10}不重要[^。！？\\n]{0,6}重要的是",
+    "真正(?:的)?(?:问题|价值|壁垒|差距)(?:在于|不是)"
+   ]
+  },
+  {
+   "id": "vague_attr",
+   "label": "vague_attributions",
+   "level": "Must-fix",
+   "file": null,
+   "items": [
+    "专家认为",
+    "研究表明",
+    "据悉",
+    "据了解",
+    "数据显示",
+    "业内人士指出",
+    "相关人士表示"
+   ]
+  },
+  {
+   "id": "enum",
+   "label": "mechanical_enumeration",
+   "level": "Should-fix",
+   "file": null,
+   "items": [
+    "首先",
+    "其次",
+    "第三",
+    "第四",
+    "最后",
+    "第一",
+    "第二"
+   ]
+  },
+  {
+   "id": "double_mods",
+   "label": "double_modifiers",
+   "level": "Should-fix",
+   "kind": "pairs",
+   "file": null,
+   "items": [
+    [
+     "验证与确认",
+     "验证"
+    ],
+    [
+     "精密度与准确度",
+     "精密度"
+    ],
+    [
+     "科学性与可靠性",
+     "科学性"
+    ],
+    [
+     "准确性与可靠性",
+     "准确性"
+    ],
+    [
+     "审核与追溯",
+     "审核"
+    ]
+   ]
+  },
+  {
+   "id": "self_praise",
+   "label": "self_praise",
+   "level": "Should-fix",
+   "kind": "regex",
+   "file": null,
+   "items": [
+    "奠定了坚实基础",
+    "有效保障了",
+    "充分体现了",
+    "具有重要的.*意义",
+    "产生深远影响",
+    "全面摸清.*家底"
+   ]
+  },
+  {
+   "id": "slogan",
+   "label": "policy_slogans",
+   "level": "Should-fix",
+   "file": "report",
+   "items": [
+    "严守耕地保护红线",
+    "全面推进乡村振兴",
+    "促进农业高质量发展",
+    "保障粮食安全",
+    "加快推进农业农村现代化"
+   ]
+  },
+  {
+   "id": "ai_symbol",
+   "label": "ai_symbols",
+   "level": "Must-fix",
+   "file": null,
+   "items": [
+    "「",
+    "」",
+    "→",
+    "⇒",
+    "➡",
+    "➤",
+    "➜",
+    "🔴",
+    "🟠",
+    "🟡",
+    "🟢",
+    "🔵",
+    "✅",
+    "❌",
+    "⚠️",
+    "⚠",
+    "⭐",
+    "✔",
+    "✓",
+    "√",
+    "✖",
+    "△"
+   ]
   }
+ ],
+ "structural": {
+  "em_dash_symbols": [
+   "——",
+   "—"
+  ],
+  "colon_symbols": [
+   "："
+  ],
+  "arrow_chain_symbols": [
+   "→",
+   "⇒",
+   "➡",
+   "➤",
+   "➜"
+  ],
+  "$arrow_note": "箭头现由 categories/ai_symbol 统一按 Must-fix 全量标记（不再只报 3+ 串联）。本键仅为向后兼容保留，detect.py 不读取。"
+ }
 }

@@ -6,7 +6,7 @@ Load this file when the text is: a government report, technical report, feasibil
 
 ---
 
-## Must-Fix
+## 🔴 Must-Fix
 
 ### R1. Baidu-Baike Opening (百度百科式开头)
 
@@ -99,7 +99,7 @@ Also: 核心 (核心载体/核心区域/核心对象), 主导 (主导因素/主�
 
 ---
 
-## Should-Fix
+## 🟡 Should-Fix
 
 ### R6. Data + Empty Summary (数据后跟空洞总结)
 
@@ -250,7 +250,7 @@ Also: 核心 (核心载体/核心区域/核心对象), 主导 (主导因素/主�
 
 ---
 
-## Consider
+## ⚪ Consider
 
 ### R8. Administrative Hierarchy Lists (行政层级罗列)
 

@@ -14,6 +14,8 @@ DeepSeek Harness (DSH) 原生「去 AI 味」技能（Anti-AI / NTAI）。
 - **长文用 DSH `workflow` + `subagent` 扇出**：`scripts/workflow_deanti.js` 把长文档按段切开，每块交给独立子代理在自己的上下文里处理（有界上下文，对抗注意力衰减），并用 `opts.schema` 强制结构化输出。
 - **机器可校验闭环**：`validation` 检查「没有丢块」「ledger 每行都有处置」「标 `fixed` 的原文必须真的从正文消失、标 `kept` 的必须还在」，防止「记了改但正文没改」。
 - **语义三审**（不是硬编码白名单）：专有名词/固定搭配（景观格局、分布格局、闭环控制…）由模型看上下文判断保留，不用查字典穷举；拿不准交人工。
+- **语义库**：`references/lexicon.md` 抓的是「动作」不是字面——翻案腔（先造一个读者没有的误解，再推翻它抬价）换任何词都能认出来。词表只能抓字面，抓不到「同一个动作换一套字」。
+- **交付前符号硬门**：`scripts/qa_symbols.py` 一条都不许漏——任何方向的箭头、状态 emoji、勾叉、角括号必须为零，漏了就不许交稿。`×` 单列一档：作乘号（3000元/㎡ × 面积）是真排版，作判定标记才要改，交人工确认。
 
 ## 安装（DSH）
 
@@ -32,6 +34,7 @@ skills/dsh-writing-anti-ai/
   SKILL.md                      # 主指令（含分块/记账/语义三审/DSH workflow 编排）
   references/
     protocol.md                 # 执行协议：分块、记账、硬校验、失败重跑
+    lexicon.md                  # 语义库：翻案腔七类外衣、绝对禁词、语境词（按动作判，不按字面）
     patterns_data.json          # 词表数据（加词不改代码）
     allowlist.json              # 常见专有名词提示（仅提示，非权威跳过）
     replacements.md             # 逐词替换表
@@ -43,6 +46,7 @@ skills/dsh-writing-anti-ai/
     wikipedia-source.md         # 来源
   scripts/
     detect.py                   # 扫描器（--triage / --hits / --residual / --chunks）
+    qa_symbols.py               # 交付前符号硬门（箭头/emoji/勾叉/角括号，必须为零）
     workflow_deanti.js          # DSH workflow 编排模板（长文分块扇出）
   examples/
     chinese.md                  # 中文改写示例

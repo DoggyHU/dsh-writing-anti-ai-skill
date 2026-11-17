@@ -1,6 +1,10 @@
 ---
 name: dsh-writing-anti-ai
-description: "This skill should be used when the user asks to \"remove AI writing patterns\", \"去AI味\", \"除AI痕迹\", \"humanize this text\", \"make this sound more natural\", \"remove AI-generated traces\", \"fix robotic writing\", or needs to eliminate AI writing patterns from prose. Supports Chinese and English across multiple genres including reports, academic papers, and narrative. Native to DeepSeek Harness (DSH); automatically scales short/medium/long documents, and for long text uses the DSH workflow + subagent tools to fan out per-chunk edits with machine-checkable structure. Based on Wikipedia's \"Signs of AI writing\" guide."
+description: This skill should be used when the user asks to "remove AI writing patterns", "去AI味", "除AI痕迹", "humanize this text", "make this sound more natural", "remove AI-generated traces", "fix robotic writing", or needs to eliminate AI writing patterns from prose. Supports Chinese and English across multiple genres including reports, academic papers, and narrative. Uses a closed-loop protocol (sizing, per-instance ledger, re-scan of the original, hard verification) so fixes do not get silently dropped on long documents. Based on Wikipedia's "Signs of AI writing" guide.
+version: 2.1.0
+author: gaoruizhang
+license: MIT
+tags: [Writing, AI, Anti-AI, Humanizer, NTAI]
 ---
 
 # Writing Anti-AI (NTAI)
@@ -9,15 +13,15 @@ Remove AI-generated writing patterns. Turn machine prose into human prose.
 
 ## Signal Levels
 
-Every pattern carries a signal level that decides how to handle it:
+Every pattern carries a signal level that determines how to handle it:
 
-| Level | Rule |
-|-------|------|
-| Must-fix | Remove on sight. No exceptions. |
-| Should-fix | Remove unless the genre explicitly requires it. |
-| Consider | Flag. The decision depends on context. |
+| Level | Tag | Rule |
+|-------|-----|------|
+| **Must-fix** | 🔴 | Remove on sight. No exceptions. |
+| **Should-fix** | 🟡 | Remove unless genre explicitly requires it. |
+| **Consider** | ⚪ | Flag. Decision depends on context. |
 
-When uncertain, treat Must-fix as non-negotiable, and keep a Should-fix item only when there is a reason.
+When uncertain: 🔴 is non-negotiable. 🟡 needs a reason to keep.
 
 ## Step 0. Size the job before editing
 
@@ -27,62 +31,80 @@ Estimate the target text size. Choose the strategy that matches. **Never attempt
 |------|-----------|----------|
 | Short | up to ~600 chars | Single pass, then forced re-check of the original. |
 | Medium | ~600–2,500 chars | Split into chunks; edit each chunk; re-check with a ledger. |
-| Long | over ~2,500 chars or 40+ sentences | Fan out to subagents via the DSH `workflow`/`subagent` tools, one chunk per subagent, structured ledger output. |
+| Long | over ~2,500 chars or 40+ sentences | Fan out to subagents (Step 6) or manual chunking (Step 5). |
 
-If the DSH `workflow` tool is available and the text is Long, use it (see Step 6). If it is not available, fall back to manual chunking (see Step 5).
+For Medium/Long, load `references/protocol.md` for the full execution protocol (chunking, ledger reconciliation, failure retry).
 
-## Step 1. Scan (word level)
+## Step 1. Scan (词汇层)
 
 Flag every instance of:
 
-- Filler phrases. Consult `references/replacements.md` for the lookup table.
-- AI marker words: 依托, 赋能, 闭环, 抓手, 格局, 夯实, 扎实推进, 深入开展, 持续优化, 显著, 大幅.
-- Overused vague intensifiers: 突出 (the most common offender in reports, often ten or more instances per file), 核心, 关键, 主导, 根本 when used as filler causal connectors.
-- Value-judgment adjectives: 重要的, 著名的, 优良的, 完善的, 严格的, 充分的, 深刻的, 丰富的, 良好的, 优越的, 优异的, 独特的.
-- Intensifier stacking: 非常, 极其, 极为, 极度, 急剧, 大幅, 持续, 不断, 严重 when used as generic emphasis without data backing.
-- Vague attributions with no source: 专家认为, 研究表明, 据悉, 据了解, 数据显示.
-- Arrow-symbol chains: (→, ⇒, ➡, ➤, ➜) used as flowchart connectors joining three or more items in prose, such as A→B→C→D. Replace with commas or a natural list.
+- **Filler phrases** — consult `references/replacements.md` for the lookup table.
+- **AI marker words** — 依托, 赋能, 闭环, 抓手, 格局, 夯实, 扎实推进, 深入开展, 持续优化, 显著, 大幅, plus the extended list in `references/patterns_data.json` (着力, 大力, 强化, 深化, 全面提升, 显著提升, 大幅增加, 不断完善, 充分发挥, 有机结合, 深度融合, 统筹协调, 协同推进, 系统部署, 周密安排, 精心组织).
+- **Overused vague intensifiers** — 突出 (most common offender in reports, over 10+ instances per file is typical), 核心, 关键, 主导, 根本 (causal connectors used as filler).
+- **Value-judgment adjectives** — 重要的, 著名的, 优良的, 完善的, 严格的, 充分的, 深刻的, 丰富的, 良好的, 优越的, 优异的, 独特的.
+- **Intensifier stacking** — 非常, 极其, 极为, 极度, 急剧, 大幅, 持续, 不断, 严重 (when used as generic emphasis without data backing).
+- **Vague attributions** — 专家认为, 研究表明, 据悉, 据了解, 数据显示 (without a specific source).
+- **黑话 / 翻案腔** — two extra Must-fix families in `references/patterns_data.json` (`jargon_ban`, `fanan`), plus the semantic library in `references/lexicon.md`. 翻案腔 is judged by the *move*, not the words: 先造一个读者没有的误解，再推翻它抬价（"不是 X，而是 Y"、"看似 A，实则 B"）。Strip it to the plain judgment.
+- **AI symbols** — four families, all delete-on-sight (any occurrence, not just 3+ arrow chains):
+  - Arrow connectors — →, ⇒, ➡, ➤, ➜. Replace with 顿号、逗号, or 到/再到.
+  - Status emoji — ✅ ❌ ⚠️ 🔴 🟠 🟡 🟢 ⭐. Replace with the Chinese word the mark stood for (符合 / 不符合 / 需注意).
+  - Corner brackets — 「 」. Replace with “ ” (standard Chinese quotes, typeable on any pinyin IME).
+  - Check marks — √ ✓ ✖ △. Same replacement as emoji. **Exception**: × is a multiplication sign in `3000元/㎡ × 面积` — judge by context, never blanket-replace.
+  - Rationale: these render as tofu boxes in many government portals and cannot be typed on a standard pinyin IME, so a colleague cannot edit the file after you hand it over.
 
-For a Must-fix item, replace or delete immediately. Record each hit in the ledger (Step 4). Mark Should-fix items for the sentence pass.
+**Action**: 🔴 → replace or delete immediately. 🟡 → mark for the sentence pass. Record every hit in the ledger (Step 4).
 
-For a token that might be a 专有名词 or fixed term (景观格局, 分布格局, 发展格局, 闭环控制…), do NOT auto-fix or auto-skip from a list. Decide by meaning using the surrounding context — see Step 4.5 (semantic triage). A hard-coded allowlist cannot cover every domain, so the judgment is semantic, not lookup.
+For a token that might be a 专有名词 or fixed term (景观格局, 分布格局, 发展格局, 闭环控制…), do **not** auto-fix or auto-skip from a list. Decide by meaning using the surrounding context — see Step 4.5 (semantic triage). A hard-coded allowlist cannot cover every domain, so the judgment is semantic, not lookup.
 
-## Step 2. Restructure (sentence level)
+## Step 2. Restructure (句法层)
 
 Target structural patterns:
 
-- Mechanical enumeration: sequences of 首先/其次/第三/第四/最后. Break the sequence: expand one step, collapse the others.
-- Double modifiers: A与B pairs doing the same job (验证与确认, 精准度与准确度). Keep one.
-- 确保/保障 plus an abstract noun ending. Replace with a factual statement or delete.
-- Self-praising paragraph closers. Delete the whole closing sentence.
-- Em-dash overuse. More than two per thousand characters. Replace with a comma or a period.
-- Heavy colon density. More than 1.5 per hundred characters. Restructure.
+- **Mechanical enumeration** — sequences of 首先/其次/第三/第四/最后. Break the sequence: expand one step, collapse the others.
+- **Double modifiers** — A与B pairs doing the same job (验证与确认, 精准度与准确度). Keep one.
+- **确保/保障…性 endings** — Replace with a factual statement or delete.
+- **Self-praising paragraph closers** — Delete the entire closing sentence.
+- **Em-dash overuse** — >2 per 1000 characters. Replace with comma or period.
+- **Heavy colon density** — >1.5 per 100 characters. Restructure.
 
-Rewrite sentence structure and vary length. Every two hundred characters should contain at least one sentence of twelve characters or fewer.
+Rewrite sentence structure and vary length. Every 200 characters must contain at least one sentence ≤12 characters.
 
-## Step 3. Reorganize (document level)
+## Step 3. Reorganize (语篇层)
 
 Check document-level patterns:
 
-- Encyclopedia openings ("XX位于...是...的重要..."). Cut to what the reader needs.
-- Policy slogan clusters. Replace with factual description.
-- Echo conclusions. A conclusion must add new information, not restate the introduction.
-- Uniform paragraph length. Vary paragraph size by at least twofold within the document.
-- Genre-specific patterns. If the genre is known, load the matching file from `references/patterns/`.
+- **Encyclopedia openings** — "XX位于…是…的重要…". Cut to what the reader needs.
+- **Policy slogan clusters** — Replace with factual description.
+- **Echo conclusions** — Conclusion must add new information, not restate the intro.
+- **Uniform paragraph length** — Vary paragraph size by at least 2x within the document.
+- **[Genre-specific]** — If genre is known, load the matching pattern file from `references/patterns/`.
 
-Restructure paragraphs and sections for a natural rhythm.
+Restructure paragraphs and sections for natural rhythm.
 
 ## Step 4. Maintain a ledger — this closes the loop
 
 Never finish without a ledger. The ledger is what makes omissions visible. Produce a table with a row per detected instance:
 
-| Type | Original | Fixed | Disposition (fixed / kept / skipped) |
+| Type | Original | Fixed | Disposition |
+|------|----------|-------|-------------|
+| Must-fix: filler | 值得注意的是 | (deleted) | fixed |
+| Must-fix: arrow chain | A→B→C | A、B 到 C | fixed |
+| Consider: rule of three | …X、Y、Z… | — | kept (natural) |
 
 - Every Must-fix token you find gets a row.
-- If you kept something, say why in the disposition.
-- At the end, re-scan the ORIGINAL text with fresh eyes, not your edited output. Compare the ledger against the original. Anything you missed the first time is exactly what attention decay hides — add it.
+- Disposition is one of `fixed`, `kept (reason)`, `skipped (reason)`. Never leave it blank. A blank disposition is a missing accountability entry.
+- At the end, re-scan the **ORIGINAL** text with fresh eyes, not your edited output. Compare the ledger against the original. Anything you missed the first time is exactly what attention decay hides — add it.
+- **Rule: do not report completion until the re-scan of the original adds zero new rows.**
 
-Rule: do not report completion until the re-scan of the original adds zero new rows.
+### Hard verification (the guard against "记了 fixed 但正文没改")
+
+A ledger row that claims `disposition: fixed` must be reflected in the text, not just in the ledger. Verify both directions:
+
+- Every `fixed` row: its literal `original` must NOT still appear in the edited text. If it does, the change was claimed but not applied — treat as a dropped fix and redo it.
+- Every `kept` row: its literal `original` SHOULD still appear. If it vanished, a kept item was accidentally changed — restore it.
+
+You can automate the first half with `python scripts/detect.py --residual <original> <edited>` — it lists which pattern hits remain in the edited text.
 
 ## Step 4.5 Semantic triage — 专有名词 vs AI word, by meaning
 
@@ -93,112 +115,126 @@ The scanner outputs candidates, not verdicts. For every candidate, decide its di
 - A general token that is a 专有名词 in this domain but AI filler in another → judge by THIS text's conventions.
 - Unsure → `review (human)` and surface it. Do not guess to save work.
 
-Use `detect.py --triage <file>` to get candidates with `context_before`/`context_after` and an `allowlist_hint`. The hint is advisory only — verify it against context. Full decision rules: `references/protocol.md` §3.5.
+Use `python scripts/detect.py --triage <file>` to get candidates with `context_before`/`context_after` and an `allowlist_hint`. The hint is advisory only — verify it against context (e.g. "格局" inside "景观格局" is fine, bare "格局" is not). Full decision rules: `references/protocol.md` §3.5.
 
-## Step 5. Long documents without the workflow tool
+## Step 5. Long documents — manual chunking (fallback)
 
-If `workflow` is unavailable but the text is Long:
+If you are not fanning out to subagents but the text is Long:
 
-1. Split the text at paragraph or section boundaries into chunks of roughly 500–800 characters. Do not split mid-sentence.
+1. Split the text at paragraph or section boundaries into chunks of roughly 500–800 characters. Do not split mid-sentence. Use `python scripts/detect.py --chunks <file>` for line ranges, or split by hand. Number the chunks (chunk_01, chunk_02, …) so reassembly order is unambiguous.
 2. Process each chunk independently against Steps 1–4.
 3. After every chunk, re-read that chunk's original once more and reconcile the ledger.
 4. Concatenate the fixed chunks, then run a whole-document scan for cross-chunk issues (echo conclusions, uniform-length problems, symbols spanning a break).
 
-## Step 6. Long documents with the workflow tool (preferred)
+## Step 6. Long documents — fan out to subagents (preferred)
 
-If the DSH `workflow` tool is available and the text is Long, do NOT write an orchestrator from scratch. Use the ready-to-run script at `scripts/workflow_deanti.js`:
+For Long text, the scalable fix is bounded context: each chunk is edited by its own subagent in its own context, so no single context holds the whole document while applying rules.
 
-1. Read `scripts/workflow_deanti.js` (or recall it) and put its body verbatim into the `workflow` tool's `script` parameter.
-2. Pass the document as `args`, e.g. `{ "text": "<the full text>", "genre": "report", "chunkTarget": 700 }`.
-3. The script already does the two DSH things that solve attention decay:
-   - **Bounded context**: `pipeline` runs one subagent per chunk, each in its own context, so no single context holds the whole document while applying rules.
-   - **Machine-checkable loop**: `opts.schema` forces every subagent to return `{ fixed_text, ledger }`; the script then validates programmatically that (a) no chunk was dropped, (b) no ledger row lacks a disposition, (c) — the hard gate — every `fixed` row's `original` is actually GONE from the output and every `kept` row's `original` is actually STILL PRESENT. It strips chunk-seam `…` markers and returns `{ assembled_text, merged_ledger, counts, validation }`.
-4. Adjust `args.genre` to match the text. The per-chunk prompt already lists Must/Should rules and semantic triage (专有名词 keep, unsure -> `review (human)`); it explicitly tells the editor NOT to default every Should-fix to `kept` — only genuine 专有名词/固定搭配 stay, real AI-flavored phrasing gets fixed.
-5. After the run, reconcile `validation.issues` if any — a `false-fixed` (claimed fixed but still present) or `false-kept` (kept but missing) row names the chunk and fragment; re-run that chunk. Feed the merged_ledger's `review (human)` rows to the human.
+**On DSH, do not write the orchestrator from scratch** — `scripts/workflow_deanti.js` is ready to run. Put its body verbatim into the `workflow` tool's `script` parameter and pass the document as `args` (`{ "text": "…", "genre": "report", "chunkTarget": 700 }`). It chunks, runs `pipeline` with one subagent per chunk, forces `{ fixed_text, ledger }` through `opts.schema`, strips chunk-seam `…` markers, and returns `{ assembled_text, merged_ledger, counts, validation }`. Reconcile `validation.issues` if any; a `false-fixed` (claimed fixed but still present) or `false-kept` (kept but missing) row names the chunk and fragment, so re-run that chunk only. Feed `review (human)` rows to the human.
 
-The earlier JSON in this step is now superseded by that script; keep it only if you must inline a minimal schema.
+**On any other harness**, do the same thing by hand:
+
+1. Split the text into chunks of ~500–800 chars at paragraph/section boundaries (same rule as Step 5).
+2. Launch one Task subagent per chunk (in parallel). Give each subagent:
+   - The chunk text, with a `…` seam marker at the start/end as a context hint for neighboring text (tell it NOT to keep the marker in its output).
+   - The rule set: Must/Should/Consider lists + semantic triage (专有名词 → `kept`; unsure → `review (human)`, do not default every Should-fix to `kept`).
+   - A strict output contract: return JSON `{ "fixed_text": string, "ledger": [ { "type", "original", "fixed", "disposition" } ] }` where disposition ∈ `fixed` / `kept` / `skipped` / `review (human)`.
+   - The hard rule: `fixed_text` must be plain prose only (no JSON structure, no keys like "fixed_text", no braces, no "返回：" prefixes); every `fixed` row's `original` must NOT remain in `fixed_text`; every `kept` row's original must remain verbatim.
+3. Reassemble in chunk order; merge ledgers.
+4. Hard-verify programmatically: every `fixed` row's `original` absent from the assembled text, every `kept` row's original present. Any chunk that fails → re-run that chunk only. Feed `review (human)` rows to the human.
+
+Both routes run the same two mechanisms: bounded context + a machine-checkable loop.
 
 ## Step 7. Verify
 
 Audit before declaring done:
 
-- All Must-fix patterns removed? Confirmed by re-scanning the ORIGINAL, not the output.
-- Ledger present with no empty disposition?
-- No intact 首先/其次/第三/第四/最后 sequence?
-- No paragraph ends with a self-praising summary?
-- No sentence opens with 值得注意的是 or 需要强调的是?
-- No sentence ends with "反映了……的……"? Replace with a factual statement or delete.
-- Em-dash count below two per thousand characters?
-- All value-judgment adjectives justified or removed?
-- 突出 count below five per thousand characters?
-- No arrow-symbol chain of three or more items in prose?
-- For Long docs: every chunk has a ledger and appears in the assembled output exactly once?
-- Hard check passed: every `fixed` ledger row's `original` is absent from the assembled text, and every `kept` row's `original` is still present (this is the guard against "记了 fixed 但正文没改")
-- No `…` seam marker leaked into the assembled text
+- [ ] All 🔴 patterns removed? Confirmed by re-scanning the ORIGINAL, not the output.
+- [ ] Ledger present with no empty disposition?
+- [ ] Sentence length variance: longest/shortest ≥ 4 within any 500-char window?
+- [ ] No intact "首先/其次/第三/第四/最后" sequence?
+- [ ] No paragraph ends with a self-praising summary?
+- [ ] No sentence opens with "值得注意的是" or "需要强调的是"?
+- [ ] No sentence ends with "反映了……的……"? Replace with a factual statement or delete.
+- [ ] Em-dash count < 2 per 1000 chars?
+- [ ] All value-judgment adjectives justified or removed?
+- [ ] 突出 count < 5 per 1000 chars (if higher, most are filler)?
+- [ ] Zero arrows of ANY direction (→ ← ↑ ↓ ⇒ ⇐ ⇑ ⇓ ➡ ⟶ ⇨ and ASCII `->` `=>`) anywhere in prose — verified by `python scripts/qa_symbols.py <edited>` exiting 0, not by eyeballing?
+- [ ] Zero corner brackets 「」, zero check marks and zero status emoji — same gate confirms it?
+- [ ] Any surviving × confirmed to be a multiplication sign, not a verdict mark?
+- [ ] ①②③ and ≤ ≥ left alone (these are correct Chinese typography, not AI symbols)?
+- [ ] Hard check passed: every `fixed` ledger row's `original` is absent from the assembled text, and every `kept` row's `original` is still present?
+- [ ] No `…` seam marker leaked into the assembled text?
+- [ ] For Long docs: every chunk has a ledger and appears in the assembled output exactly once?
 
 ## Five Universal Rules
 
-### 1. Cut, do not soften
+### 1. Cut, Don't Soften
 Filler adds nothing. Delete it.
-> 值得注意的是 (delete)
-> 需要强调的是 (delete)
+> 值得注意的是， → (delete)
+> 需要强调的是， → (delete)
 
-### 2. State facts, not judgments
-Let facts carry the weight. Strip the adjectives.
+### 2. State Facts, Not Judgments
+Let facts carry weight. Strip the adjectives.
 > 建立了完善的质控体系 → 建立了质控体系
 > 重要的粮食产区 → 粮食产区
-> 品质优良 → delete; the data speaks
+> 品质优良 → (delete, the data speaks)
 
-Keep 显著 only when a significance test backs it (显著影响, p<0.05). Delete it when used as generic emphasis (显著改善, 显著提升). The test: if you cannot cite a significance test, it is filler.
+**Edge case — 显著**: Keep when backed by a p-value (显著影响, p<0.05). Delete when used as generic emphasis (显著改善, 显著提升). The difference: if you can't cite a significance test, it's filler.
 
-### 3. Name specifically, do not gesture
+### 3. Name Specifically, Don't Gesture
 > 专家认为 → name the expert, or delete
 > 研究表明 → cite the study, or delete
 
-### 4. Vary structure, do not template
-Do not start three consecutive sentences the same way. Do not end three consecutive paragraphs with a summary. Avoid the 首先/其次/第三/第四/最后 pattern entirely.
+### 4. Vary Structure, Don't Template
+> Don't start three consecutive sentences the same way.
+> Don't end three consecutive paragraphs with a summary.
+> Avoid "首先A, 其次B, 第三C, 第四D, 最后E" at all costs.
 
-### 5. Connect by meaning, not by marker
-Kill connective words and let the logic carry the transition.
-> 此外, 另外, 同时, 并且 → delete
-> 因此, 所以 → cut by about 70%
-> 然而, 但是 → cut by about 50%
+### 5. Connect by Meaning, Not by Marker
+Kill connective words. Let logic carry the transition.
+> 此外 / 另外 / 同时 / 并且 → delete
+> 因此 / 所以 → reduce by 70%
+> 然而 / 但是 → reduce by 50%
 
 ## Genre Adaptation
 
-When the genre is known, load the matching pattern file for genre-specific patterns:
+When the genre is known, load the corresponding pattern file for genre-specific 🔴 patterns:
 
 | Genre | File | Key additions |
 |-------|------|--------------|
 | Government/technical report | `references/patterns/report.md` | encyclopedia openings, policy slogans, bureaucratic filler, 了-stacking |
 | Academic paper | `references/patterns/academic.md` | "填补空白" claims, citation hallucinations, formulaic challenges |
-| Narrative / general prose | (universal only) | focus on voice injection over pattern removal |
+| Narrative / general prose | (universal only) | Focus on voice injection over pattern removal |
 
-To activate, state the genre at the start. Load the file and merge it with the universal patterns.
+To activate: state the genre at the start. The agent loads the file and merges with universal patterns.
 
 ## Boundaries
 
-This skill does not:
-
+This skill does NOT:
 - Rewrite content or alter factual meaning
-- Fix grammar, spelling, or punctuation (a separate concern)
+- Fix grammar, spelling, or punctuation (separate concern)
 - Add new content or expand arguments
 - Convert between languages
-- Judge writing quality beyond the presence of AI patterns
+- Judge writing quality beyond AI-pattern presence
 
-If AI-pattern density exceeds roughly 40% of sentences, flag the text instead of attempting a full rewrite; the underlying content may need human restructuring first.
+If AI-pattern density exceeds ~40% of sentences, flag the text rather than attempting full rewrite — the underlying content may need human restructuring first.
 
 ## Resources
 
 Load on demand, not all at once:
 
-- `references/protocol.md`: the execution protocol for chunking, ledger reconciliation, and failure retry.
-- `references/principles.md`: why each pattern signals AI. Read when unsure about an edge case.
-- `references/replacements.md`: quick lookup mapping an AI word to a natural alternative.
-- `references/patterns/universal.md`: full universal catalog with signal levels and examples.
-- `references/patterns/report.md`: government and technical report patterns.
-- `references/patterns/academic.md`: academic paper patterns.
-- `references/patterns-english.md`: English AI patterns (legacy, based on Wikipedia).
-- `references/wikipedia-source.md`: source attribution.
-- `scripts/detect.py`: scanner. Emits candidates `--triage` (with context), per-instance `--hits`, residual `--residual`, and chunk ranges `--chunks`. Scanner gives candidates with `allowlist_hint`; the verdict comes from semantic triage (Step 4.5).
-- `scripts/workflow_deanti.js`: ready-to-run DSH `workflow` orchestrator for Long docs. Fans out chunks to subagents (bounded context) and machine-validates the ledger. Copy its body into the `workflow` tool's `script`; pass text as `args`.
+- `references/protocol.md` — the execution protocol for chunking, ledger reconciliation, and failure retry.
+- `references/principles.md` — WHY each pattern signals AI (read when unsure about an edge case).
+- `references/replacements.md` — Quick lookup: AI word → natural alternative.
+- `references/lexicon.md` — 语义库：翻案腔七类外衣、绝对禁词、语境词、借喻词、抒情词、名词化与结尾大词。先过 A 类（翻案腔），再清 B 类，C/D/E 按语境判。
+- `references/patterns_data.json` — Data-driven pattern catalog (add words/categories by editing JSON, not code).
+- `references/allowlist.json` — Hint-only allowlist of known 专有名词/固定搭配 (advisory for semantic triage, never an authoritative skip).
+- `references/patterns/universal.md` — Full universal catalog with signal levels and examples.
+- `references/patterns/report.md` — Government/technical report patterns.
+- `references/patterns/academic.md` — Academic paper patterns.
+- `references/patterns-english.md` — English AI patterns (legacy, Wikipedia-based).
+- `references/wikipedia-source.md` — Original source attribution.
+- `scripts/detect.py` — Scanner. Modes: default `<file>` (summary report); per-instance candidates `--hits <file>`; candidates with context for semantic triage `--triage <file>`; residual hits left in an edited text `--residual <original> <edited>`; chunk line ranges `--chunks <file>`. Pure standard library.
+- `scripts/qa_symbols.py` — Delivery gate. Full-text zero-tolerance scan for arrows of every direction (plus ASCII `->` `=>`), status emoji, check marks and corner brackets; code fences are skipped by default. Exits 1 if anything fatal remains — run it before handing text over.
+- `scripts/workflow_deanti.js` — Ready-to-run DSH `workflow` orchestrator body for Step 6. Put its body verbatim into the `workflow` tool's `script` parameter and pass the document as `args` (`{ "text": "…", "genre": "report", "chunkTarget": 700 }`).

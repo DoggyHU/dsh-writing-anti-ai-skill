@@ -6,7 +6,7 @@ Load this file when the text is: a research paper, thesis, conference submission
 
 ---
 
-## Must-Fix
+## 🔴 Must-Fix
 
 ### A1. "填补空白" Claims (Gap-Filling Template)
 
@@ -37,7 +37,7 @@ Load this file when the text is: a research paper, thesis, conference submission
 
 ---
 
-## Should-Fix
+## 🟡 Should-Fix
 
 ### A4. Overly Smooth Transitions (过度平滑过渡)
 
@@ -66,7 +66,7 @@ Load this file when the text is: a research paper, thesis, conference submission
 
 ---
 
-## Consider
+## ⚪ Consider
 
 ### A7. Paper Structure Templates (论文结构模板化)
 
